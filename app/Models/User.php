@@ -21,6 +21,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'phone',
+        'address',
+        'is_active',
     ];
 
     /**
@@ -43,6 +47,47 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the member profile for the user.
+     */
+    public function member()
+    {
+        return $this->hasOne(Member::class);
+    }
+
+    /**
+     * Get the transactions as cashier.
+     */
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'cashier_id');
+    }
+
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if user is kasir
+     */
+    public function isKasir()
+    {
+        return $this->role === 'kasir';
+    }
+
+    /**
+     * Check if user is member
+     */
+    public function isMember()
+    {
+        return $this->role === 'member';
     }
 }
