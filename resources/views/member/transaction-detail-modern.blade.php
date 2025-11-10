@@ -1,25 +1,17 @@
 @extends('layouts.modern')
 
 @section('title', 'Detail Transaksi')
-@section('breadcrumb')
-    <i class="fas fa-home mr-2"></i>
-    <span>Dashboard</span>
-    <i class="fas fa-chevron-right mx-2" style="font-size: 10px; color: #D1D5DB;"></i>
-    <span>Riwayat Transaksi</span>
-    <i class="fas fa-chevron-right mx-2" style="font-size: 10px; color: #D1D5DB;"></i>
-    <span class="breadcrumb-active">{{ $transaction->transaction_code }}</span>
-@endsection
 
 @section('content')
 <div class="fade-in">
     <!-- Back Button -->
-    <a href="{{ route('member.transactions') }}" style="display: inline-flex; align-items: center; gap: 8px; color: #6B7280; text-decoration: none; margin-bottom: 24px; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#4F46E5'" onmouseout="this.style.color='#6B7280'">
+    <a href="{{ route('member.transactions') }}" style="display: inline-flex; align-items: center; gap: 8px; color: #6B7280; text-decoration: none; margin-bottom: 24px; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#FF6F00'" onmouseout="this.style.color='#6B7280'">
         <i class="fas fa-arrow-left"></i>
         <span>Kembali ke Riwayat Transaksi</span>
     </a>
 
     <!-- Transaction Header -->
-    <div class="card" style="background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%); margin-bottom: 24px;">
+    <div class="card" style="background: linear-gradient(135deg, #FF6F00 0%, #F57C00 100%); margin-bottom: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: start; color: white; flex-wrap: wrap; gap: 20px;">
             <div>
                 <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 10px; margin-bottom: 16px;">
@@ -248,4 +240,5 @@
     }
 }
 </style>
+</div>
 @endsection

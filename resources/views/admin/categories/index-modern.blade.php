@@ -38,7 +38,7 @@
                             @endif
                         </td>
                         <td style="text-align: center;">
-                            <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <span style="font-weight: 600; color: #667eea;">
                                 {{ $category->products_count }} produk
                             </span>
                         </td>

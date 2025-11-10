@@ -6,8 +6,12 @@ use App\Models\Member;
 use App\Models\Transaction;
 use App\Models\Product;
 use App\Models\Promotion;
+use App\Models\PointsHistory;
+use App\Models\Voucher;
+use App\Models\MemberVoucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class MemberController extends Controller
 {
@@ -51,7 +55,26 @@ class MemberController extends Controller
     {
         $member = auth()->user()->member;
 
-        return view('member.qr-code', compact('member'));
+        return view('member.qr-code-modern', compact('member'));
+    }
+
+    /**
+     * Generate QR Code for member
+     */
+    public function generateQR()
+    {
+        $member = auth()->user()->member;
+        
+        // Import QRCodeService
+        $qrService = app(\App\Services\QRCodeService::class);
+        
+        // Generate new QR Code
+        $qrPath = $qrService->generateMemberQR($member);
+        
+        // Update member with new QR path
+        $member->update(['qr_code' => $qrPath]);
+        
+        return redirect()->route('member.qr-code')->with('success', 'QR Code berhasil di-generate!');
     }
 
     /**
@@ -232,5 +255,128 @@ class MemberController extends Controller
         ]);
 
         return back()->with('success', 'Password changed successfully!');
+    }
+
+    /**
+     * View available vouchers
+     */
+    public function vouchers()
+    {
+        $member = auth()->user()->member;
+        
+        $vouchers = Voucher::where('is_active', true)
+            ->where('valid_from', '<=', now())
+            ->where('valid_until', '>=', now())
+            ->where(function($query) {
+                $query->whereNull('stock')
+                      ->orWhere('stock', '>', 0);
+            })
+            ->withCount(['memberVouchers' => function($query) use ($member) {
+                $query->where('member_id', $member->id);
+            }])
+            ->get();
+
+        return view('member.vouchers-modern', [
+            'member' => $member,
+            'vouchers' => $vouchers,
+        ]);
+    }
+
+    /**
+     * Redeem voucher with points
+     */
+    public function redeemVoucher(Request $request, $voucherId)
+    {
+        $member = auth()->user()->member;
+        $voucher = Voucher::findOrFail($voucherId);
+
+        // Validasi voucher
+        if (!$voucher->isValid()) {
+            return back()->with('error', 'Voucher tidak valid atau sudah tidak berlaku.');
+        }
+
+        // Cek poin member cukup
+        if ($member->points < $voucher->points_required) {
+            return back()->with('error', 'Poin Anda tidak cukup untuk menukar voucher ini.');
+        }
+
+        // Cek stok voucher
+        if ($voucher->stock !== null && $voucher->stock <= 0) {
+            return back()->with('error', 'Stok voucher habis.');
+        }
+
+        // Cek max usage per member
+        $memberRedemptionCount = MemberVoucher::where('member_id', $member->id)
+            ->where('voucher_id', $voucher->id)
+            ->count();
+
+        if ($memberRedemptionCount >= $voucher->max_usage_per_member) {
+            return back()->with('error', 'Anda sudah mencapai batas maksimal penukaran voucher ini.');
+        }
+
+        // Cek max usage total
+        if ($voucher->max_usage !== null) {
+            $totalRedemptions = MemberVoucher::where('voucher_id', $voucher->id)->count();
+            if ($totalRedemptions >= $voucher->max_usage) {
+                return back()->with('error', 'Voucher sudah mencapai batas maksimal penukaran.');
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            // Kurangi poin member
+            $member->usePoints(
+                $voucher->points_required,
+                null,
+                'Penukaran voucher: ' . $voucher->name
+            );
+
+            // Kurangi stok voucher
+            if ($voucher->stock !== null) {
+                $voucher->decrement('stock');
+            }
+
+            // Buat member voucher
+            MemberVoucher::create([
+                'member_id' => $member->id,
+                'voucher_id' => $voucher->id,
+                'points_used' => $voucher->points_required,
+                'redeemed_at' => now(),
+                'expires_at' => $voucher->valid_until,
+                'status' => 'available',
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('member.my-vouchers')->with('success', 'Voucher berhasil ditukar! Silakan gunakan di transaksi berikutnya.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * View member's vouchers
+     */
+    public function myVouchers()
+    {
+        $member = auth()->user()->member;
+        
+        $vouchers = MemberVoucher::where('member_id', $member->id)
+            ->with('voucher')
+            ->latest()
+            ->get();
+
+        // Update expired vouchers
+        $vouchers->each(function($memberVoucher) {
+            if ($memberVoucher->status === 'available' && now()->gt($memberVoucher->expires_at)) {
+                $memberVoucher->update(['status' => 'expired']);
+            }
+        });
+
+        return view('member.my-vouchers-modern', [
+            'member' => $member,
+            'vouchers' => $vouchers,
+        ]);
     }
 }

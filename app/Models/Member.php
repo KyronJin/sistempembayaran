@@ -50,6 +50,14 @@ class Member extends Model
     }
 
     /**
+     * Get the vouchers for the member.
+     */
+    public function vouchers()
+    {
+        return $this->hasMany(MemberVoucher::class);
+    }
+
+    /**
      * Add points to member
      */
     public function addPoints($points, $transactionId = null, $description = null)

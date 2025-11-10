@@ -1,17 +1,11 @@
 @extends('layouts.modern')
 
 @section('title', 'Riwayat Transaksi')
-@section('breadcrumb')
-    <i class="fas fa-home mr-2"></i>
-    <span>Dashboard</span>
-    <i class="fas fa-chevron-right mx-2" style="font-size: 10px; color: #D1D5DB;"></i>
-    <span class="breadcrumb-active">Riwayat Transaksi</span>
-@endsection
 
 @section('content')
 <div class="fade-in">
     <!-- Page Header -->
-    <div class="card" style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); margin-bottom: 32px;">
+    <div class="card" style="background: linear-gradient(135deg, #FF6F00 0%, #F57C00 100%); margin-bottom: 32px;">
         <div style="display: flex; justify-content: space-between; align-items: center; color: white;">
             <div>
                 <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 8px;">
@@ -254,4 +248,5 @@
     color: #D1D5DB;
 }
 </style>
+</div>
 @endsection

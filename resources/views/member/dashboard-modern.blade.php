@@ -8,38 +8,6 @@
 
 @section('content')
 <div class="fade-in">
-    <!-- Welcome Card with Member Info -->
-    <div class="card" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); margin-bottom: 32px; position: relative; overflow: hidden;">
-        <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-        <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-        
-        <div style="position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px;">
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 20px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-                    <i class="fas fa-user" style="font-size: 40px; color: white;"></i>
-                </div>
-                <div style="color: white;">
-                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">Selamat datang kembali,</div>
-                    <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 8px;">{{ auth()->user()->name }}</h1>
-                    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 8px;">
-                            <i class="fas fa-id-card"></i>
-                            <span style="font-weight: 600; font-size: 14px;">{{ $member->member_code }}</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 8px;">
-                            <i class="fas fa-coins"></i>
-                            <span style="font-weight: 700; font-size: 14px;">{{ number_format($member->points, 0, ',', '.') }} Poin</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <a href="{{ route('member.qr-code') }}" class="btn btn-secondary" style="background: rgba(255,255,255,0.95); color: #059669; font-weight: 700; padding: 16px 24px;">
-                <i class="fas fa-qrcode mr-2"></i>
-                <span>Lihat QR Code</span>
-            </a>
-        </div>
-    </div>
 
     <!-- Stats Cards -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 32px;">
@@ -69,13 +37,13 @@
 
         <!-- Poin Tersedia -->
         <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #FED7AA 0%, #FDBA74 100%); color: #92400E;">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #FF6F00 0%, #F57C00 100%); color: white;">
                 <i class="fas fa-coins"></i>
             </div>
-            <div class="stat-label">Poin Tersedia</div>
-            <div class="stat-value">{{ number_format($member->points ?? 0, 0, ',', '.') }}</div>
+            <div class="stat-label">Total Poin Anda</div>
+            <div class="stat-value" style="color: #FF6F00;">{{ number_format($member->points ?? 0, 0, ',', '.') }}</div>
             <div style="margin-top: 12px; font-size: 13px; color: #6B7280; font-weight: 600;">
-                <i class="fas fa-gift mr-1"></i> Dapat digunakan
+                <i class="fas fa-gift mr-1" style="color: #FF6F00;"></i> Dapat digunakan
             </div>
         </div>
 

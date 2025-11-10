@@ -3,43 +3,7 @@
 @section('title', 'Profil Saya')
 
 @section('content')
-<div class="content-header">
-    <h1>Profil Saya</h1>
-    <p>Kelola informasi akun dan kartu member Anda</p>
-</div>
-
-<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
-    <!-- Member Card -->
-    <div>
-        <div class="modern-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem;">
-            <div style="text-align: center;">
-                <div style="width: 100px; height: 100px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 3rem;">
-                    <i class="fas fa-user"></i>
-                </div>
-                <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;">{{ $member->name }}</h2>
-                <p style="opacity: 0.9; margin-bottom: 1.5rem;">{{ auth()->user()->email }}</p>
-                
-                <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
-                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">Kode Member</div>
-                    <div style="font-size: 1.5rem; font-weight: 700;">{{ $member->member_code }}</div>
-                </div>
-                
-                <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 12px;">
-                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">Total Poin</div>
-                    <div style="font-size: 2rem; font-weight: 700;">{{ number_format($member->points, 0, ',', '.') }}</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="modern-card" style="margin-top: 1.5rem; text-align: center;">
-            <a href="{{ route('member.qr-code') }}" class="btn-primary" style="display: block;">
-                <i class="fas fa-qrcode"></i> Lihat QR Member
-            </a>
-        </div>
-    </div>
-
-    <!-- Profile Forms -->
-    <div>
+<div class="fade-in">
         <!-- Update Profile -->
         <div class="modern-card" style="margin-bottom: 2rem;">
             <h3 style="margin: 0 0 1.5rem 0; font-size: 1.25rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 1rem;">
@@ -145,6 +109,7 @@
                 </div>
             </form>
         </div>
+    </div>
     </div>
 </div>
 @endsection

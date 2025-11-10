@@ -307,11 +307,38 @@ class KasirController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price' => 'required|numeric|min:0',
+            'items.*.price' => 'required|numeric|min:0.01', // Minimal 0.01, tidak boleh 0
             'payment_method' => 'required|in:cash,debit,credit,e-wallet',
-            'payment_amount' => 'required|numeric|min:0',
+            'payment_amount' => 'required|numeric|min:0.01', // Minimal 0.01, tidak boleh 0
             'points_used' => 'nullable|integer|min:0',
+            'transaction_notes' => 'nullable|string|max:1000',
         ]);
+
+        // VALIDASI KEAMANAN: Cegah transaksi kosong/gratis
+        $totalItemsValue = 0;
+        foreach ($validated['items'] as $item) {
+            $totalItemsValue += $item['price'] * $item['quantity'];
+        }
+        
+        if ($totalItemsValue <= 0) {
+            // LOG AKTIVITAS MENCURIGAKAN
+            \Log::warning('SECURITY ALERT: Percobaan transaksi Rp 0 terdeteksi', [
+                'alert_type' => 'ZERO_TRANSACTION_ATTEMPT',
+                'cashier_id' => auth()->id(),
+                'cashier_name' => auth()->user()->name,
+                'cashier_email' => auth()->user()->email,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'items_attempted' => $validated['items'],
+                'timestamp' => now()->toDateTimeString(),
+                'severity' => 'HIGH',
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'DITOLAK: Total transaksi tidak boleh Rp 0. Transaksi ini akan dilaporkan ke supervisor.',
+            ], 400);
+        }
 
         try {
             DB::beginTransaction();
@@ -400,12 +427,36 @@ class KasirController extends Controller
             // Calculate total
             $total = $taxBase + $tax - $pointsDiscount;
 
+            // VALIDASI KEAMANAN: Total tidak boleh 0 atau negatif
+            if ($total <= 0) {
+                DB::rollBack();
+                \Log::warning('SECURITY ALERT: Transaksi dengan total Rp 0 dicoba oleh kasir', [
+                    'alert_type' => 'ZERO_FINAL_TOTAL',
+                    'cashier_id' => auth()->id(),
+                    'cashier_name' => auth()->user()->name,
+                    'cashier_email' => auth()->user()->email,
+                    'subtotal' => $subtotal,
+                    'discount' => $promoDiscount,
+                    'member_discount' => $memberDiscount,
+                    'points_discount' => $pointsDiscount,
+                    'calculated_total' => $total,
+                    'timestamp' => now()->toDateTimeString(),
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'severity' => 'CRITICAL',
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'DITOLAK: Total transaksi tidak boleh Rp 0 atau negatif. Aktivitas ini telah dicatat dan akan ditinjau supervisor.',
+                ], 400);
+            }
+
             // Check payment amount
             if ($validated['payment_amount'] < $total) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'Insufficient payment amount',
+                    'message' => 'Pembayaran kurang! Dibutuhkan Rp ' . number_format($total, 0, ',', '.'),
                 ], 400);
             }
 
@@ -414,10 +465,14 @@ class KasirController extends Controller
             // Calculate points earned
             $pointsEarned = $isMember ? Transaction::calculatePoints($total) : 0;
 
-            // Create transaction
+            // Ambil info kasir untuk audit trail
+            $cashier = auth()->user();
+
+            // Create transaction dengan audit trail lengkap
             $transaction = Transaction::create([
                 'transaction_code' => Transaction::generateTransactionCode(),
-                'cashier_id' => auth()->id(),
+                'cashier_id' => $cashier->id,
+                'cashier_name' => $cashier->name, // Simpan nama kasir untuk audit
                 'member_id' => $member?->id,
                 'subtotal' => $subtotal,
                 'discount' => $promoDiscount,
@@ -431,6 +486,20 @@ class KasirController extends Controller
                 'change_amount' => $change,
                 'status' => 'completed',
                 'transaction_date' => now(),
+                'ip_address' => $request->ip(), // IP address kasir untuk audit
+                'user_agent' => $request->userAgent(), // Browser/device info
+                'transaction_notes' => $validated['transaction_notes'] ?? null,
+            ]);
+
+            // LOG TRANSAKSI SUKSES untuk audit trail
+            \Log::info('Transaksi berhasil diproses', [
+                'transaction_id' => $transaction->id,
+                'transaction_code' => $transaction->transaction_code,
+                'cashier_id' => $cashier->id,
+                'cashier_name' => $cashier->name,
+                'total' => $total,
+                'payment_method' => $validated['payment_method'],
+                'timestamp' => now()->toDateTimeString(),
             ]);
 
             // Create transaction details and update stock
@@ -546,7 +615,7 @@ class KasirController extends Controller
                                  ->count();
         $daily_total = Transaction::where('cashier_id', auth()->id())
                                  ->whereDate('transaction_date', today())
-                                 ->sum('final_total');
+                                 ->sum('total');
 
         return view('kasir.transactions-modern', compact('transactions', 'daily_count', 'daily_total'));
     }
@@ -742,6 +811,26 @@ class KasirController extends Controller
             // Calculate total
             $total = $taxBase + $tax - $pointsDiscount;
 
+            // VALIDASI KEAMANAN: Total tidak boleh 0 atau negatif
+            if ($total <= 0) {
+                DB::rollBack();
+                \Log::warning('SECURITY ALERT: Split payment dengan total Rp 0 dicoba', [
+                    'alert_type' => 'ZERO_SPLIT_PAYMENT',
+                    'cashier_id' => auth()->id(),
+                    'cashier_name' => auth()->user()->name,
+                    'subtotal' => $subtotal,
+                    'discount' => $totalItemDiscount + $promoDiscount,
+                    'calculated_total' => $total,
+                    'timestamp' => now()->toDateTimeString(),
+                    'ip_address' => $request->ip(),
+                    'severity' => 'CRITICAL',
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'DITOLAK: Total transaksi tidak valid. Aktivitas ini telah dicatat.',
+                ], 400);
+            }
+
             // Validate payment total
             $paymentTotal = array_sum(array_column($validated['payments'], 'amount'));
             
@@ -758,10 +847,14 @@ class KasirController extends Controller
             // Calculate points earned
             $pointsEarned = $isMember ? Transaction::calculatePoints($total) : 0;
 
-            // Create transaction
+            // Ambil info kasir untuk audit trail
+            $cashier = auth()->user();
+
+            // Create transaction dengan audit trail lengkap
             $transaction = Transaction::create([
                 'transaction_code' => Transaction::generateTransactionCode(),
-                'cashier_id' => auth()->id(),
+                'cashier_id' => $cashier->id,
+                'cashier_name' => $cashier->name, // Simpan nama kasir untuk audit
                 'member_id' => $member?->id,
                 'subtotal' => $subtotal,
                 'discount' => $totalItemDiscount + $promoDiscount,
@@ -775,6 +868,20 @@ class KasirController extends Controller
                 'change_amount' => $change,
                 'status' => 'completed',
                 'transaction_date' => now(),
+                'ip_address' => $request->ip(), // IP address kasir untuk audit
+                'user_agent' => $request->userAgent(), // Browser/device info
+                'transaction_notes' => 'Split payment with ' . count($validated['payments']) . ' methods',
+            ]);
+
+            // LOG TRANSAKSI SPLIT PAYMENT
+            \Log::info('Split payment transaksi berhasil', [
+                'transaction_id' => $transaction->id,
+                'transaction_code' => $transaction->transaction_code,
+                'cashier_id' => $cashier->id,
+                'cashier_name' => $cashier->name,
+                'total' => $total,
+                'payment_methods' => array_column($validated['payments'], 'method'),
+                'timestamp' => now()->toDateTimeString(),
             ]);
 
             // Create transaction details and update stock
@@ -865,6 +972,20 @@ class KasirController extends Controller
 
             $transaction = Transaction::with(['details.product', 'member'])
                 ->findOrFail($id);
+
+            // AUDIT LOG: Catat siapa yang void transaksi
+            \Log::warning('VOID TRANSAKSI', [
+                'transaction_id' => $transaction->id,
+                'transaction_code' => $transaction->transaction_code,
+                'total' => $transaction->total,
+                'voided_by' => auth()->id(),
+                'voided_by_name' => auth()->user()->name,
+                'voided_by_role' => auth()->user()->role,
+                'reason' => $validated['reason'],
+                'original_cashier' => $transaction->cashier->name ?? 'Unknown',
+                'timestamp' => now(),
+                'ip_address' => $request->ip(),
+            ]);
 
             // Only allow voiding completed transactions
             if ($transaction->status !== 'completed') {
@@ -1072,23 +1193,24 @@ class KasirController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'password' => 'nullable|string|min:8',
+            'phone' => 'required|string|max:20|unique:users,phone',
+            'password' => 'nullable|string|min:6',
         ]);
 
         try {
             DB::beginTransaction();
 
+            // Generate email from phone if not provided
+            $email = 'member' . preg_replace('/[^0-9]/', '', $validated['phone']) . '@pos.local';
+
             // Create user account
             $user = User::create([
                 'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password'] ?? 'member123'),
+                'email' => $email,
+                'password' => Hash::make($validated['password'] ?? '123456'),
                 'role' => 'member',
                 'phone' => $validated['phone'],
-                'address' => $validated['address'],
+                'address' => '-',
                 'is_active' => true,
             ]);
 
@@ -1109,12 +1231,11 @@ class KasirController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Member registered successfully',
+                'message' => 'Member berhasil didaftarkan!',
                 'member' => [
                     'id' => $member->id,
                     'member_code' => $member->member_code,
                     'name' => $user->name,
-                    'email' => $user->email,
                     'phone' => $user->phone,
                     'points' => 0,
                 ],
@@ -1174,5 +1295,45 @@ class KasirController extends Controller
         $products = Product::where('is_active', true)->orderBy('name')->get();
 
         return view('kasir.reports.sales', compact('transactions', 'totalSales', 'totalTransactions', 'startDate', 'endDate', 'members', 'products'));
+    }
+
+    /**
+     * Members Management - List all members
+     */
+    public function membersIndex(Request $request)
+    {
+        $query = Member::with('user');
+
+        // Search by name, phone, or member code
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('member_code', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('phone', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $members = $query->latest()->paginate(20);
+
+        return view('kasir.members.index-modern', compact('members'));
+    }
+
+    /**
+     * Approve a member
+     */
+    public function approveMember($id)
+    {
+        $member = Member::findOrFail($id);
+        $member->update(['status' => 'active']);
+
+        return back()->with('success', 'Member berhasil disetujui!');
     }
 }

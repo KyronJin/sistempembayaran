@@ -19,17 +19,25 @@ class AuthController extends Controller
     }
 
     /**
-     * Show login form
+     * Show Member login form
      */
-    public function showLogin()
+    public function showMemberLogin()
     {
-        return view('auth.login-modern');
+        return view('auth.login-member');
     }
 
     /**
-     * Process login
+     * Show Staff login form
      */
-    public function login(Request $request)
+    public function showStaffLogin()
+    {
+        return view('auth.login-staff');
+    }
+
+    /**
+     * Process Member login
+     */
+    public function memberLogin(Request $request)
     {
         $credentials = $request->validate([
             'email' => 'required|email',
@@ -38,17 +46,52 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->remember)) {
             $request->session()->regenerate();
-
             $user = Auth::user();
 
+            // Check if user is actually a member
+            if ($user->role !== 'member') {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Akun ini bukan member. Silakan gunakan Staff Login.',
+                ]);
+            }
+
             // Check if member is active
-            if ($user->isMember() && $user->member) {
-                if ($user->member->status !== 'active') {
-                    Auth::logout();
-                    return back()->withErrors([
-                        'email' => 'Your member account is pending approval or suspended.',
-                    ]);
-                }
+            if ($user->member && $user->member->status !== 'active') {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Akun member Anda masih pending atau suspended. Hubungi admin.',
+                ]);
+            }
+
+            return redirect()->route('member.dashboard');
+        }
+
+        return back()->withErrors([
+            'email' => 'Email atau password salah.',
+        ])->onlyInput('email');
+    }
+
+    /**
+     * Process Staff login (Admin & Kasir)
+     */
+    public function staffLogin(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (Auth::attempt($credentials, $request->remember)) {
+            $request->session()->regenerate();
+            $user = Auth::user();
+
+            // Check if user is admin or kasir
+            if (!in_array($user->role, ['admin', 'kasir'])) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Akun ini bukan staff. Silakan gunakan Member Login.',
+                ]);
             }
 
             // Redirect based on role
@@ -56,7 +99,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+            'email' => 'Email atau password salah.',
         ])->onlyInput('email');
     }
 

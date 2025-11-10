@@ -9,27 +9,76 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode" defer></script>
     <style>
-        .product-card { @apply bg-white rounded-lg shadow hover:shadow-lg transition cursor-pointer overflow-hidden; }
-        .product-card:hover { transform: translateY(-2px); }
+        :root {
+            --primary: #FFFFFF;
+            --secondary: #1F2937;
+            --accent: #FF6F00;
+            --accent-hover: #F57C00;
+            --light-bg: #F9FAFB;
+            --border: #E5E7EB;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+        }
+        
+        * { transition: all 0.2s ease; }
+        
+        .product-card { 
+            @apply bg-white rounded-lg shadow hover:shadow-lg cursor-pointer overflow-hidden border-2 border-transparent;
+            transition: all 0.3s ease;
+        }
+        .product-card:hover { 
+            transform: translateY(-4px) scale(1.02);
+            border-color: var(--accent);
+            box-shadow: 0 12px 24px rgba(255, 111, 0, 0.2);
+        }
         .product-img { @apply w-full h-32 object-cover bg-gray-100; }
-        .cart-item-row { @apply flex items-center justify-between border-b py-2; }
-        .btn-action { @apply px-4 py-3 rounded-lg font-semibold transition; }
+        .cart-item-row { 
+            @apply flex items-center justify-between border-b py-2;
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .btn-action { 
+            @apply px-4 py-3 rounded-lg font-semibold;
+            transition: all 0.3s ease;
+        }
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .btn-action:active {
+            transform: translateY(0);
+        }
         #reader { border-radius: 8px; overflow: hidden; max-height: 250px; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-down { animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="bg-gray-50 h-screen overflow-hidden flex flex-col">
+<body class="h-screen overflow-hidden flex flex-col" style="background: var(--light-bg);">
     <!-- Top Bar -->
-    <div class="bg-blue-600 text-white shadow-lg">
+    <div class="text-white shadow-lg" style="background: linear-gradient(135deg, var(--secondary) 0%, #111827 100%);">
         <div class="px-4 py-3 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <i class="fas fa-cash-register text-2xl"></i>
+                <i class="fas fa-cash-register text-2xl" style="color: var(--accent);"></i>
                 <div>
                     <h1 class="text-xl font-bold">Point of Sale</h1>
                     <p class="text-xs opacity-75">Kasir: {{ auth()->user()->name }}</p>
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <a href="{{ route('kasir.dashboard') }}" class="px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-sm">
+                <a href="{{ route('kasir.dashboard') }}" class="px-3 py-1.5 rounded text-sm font-semibold" style="background: var(--accent); color: white;" onmouseover="this.style.backgroundColor='var(--accent-hover)'" onmouseout="this.style.backgroundColor='var(--accent)'">
                     <i class="fas fa-home mr-1"></i>Dashboard
                 </a>
             </div>
@@ -41,19 +90,20 @@
         <!-- Left Panel: Products Grid -->
         <div class="flex-1 flex flex-col overflow-hidden bg-white border-r">
             <!-- Category Tabs & Search -->
-            <!-- Category Tabs & Search -->
-            <div class="p-4 border-b bg-gray-50">
+            <div class="p-4 border-b" style="background: var(--light-bg);">
                 <div class="flex items-center space-x-2 mb-3">
                     <input id="search-input" type="text" placeholder="🔍 Cari produk (nama, SKU, barcode)..." 
-                           class="flex-1 border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:outline-none" />
-                    <button id="btn-scan-toggle" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                           class="flex-1 rounded-lg px-3 py-2 focus:outline-none" style="border: 2px solid var(--border); background: white;" 
+                           onfocus="this.style.borderColor='var(--accent)'; this.style.boxShadow='0 0 0 3px rgba(255, 111, 0, 0.1)'" 
+                           onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'" />
+                    <button id="btn-scan-toggle" class="px-4 py-2 text-white rounded-lg font-semibold" style="background: var(--accent);" onmouseover="this.style.backgroundColor='var(--accent-hover)'; this.style.transform='scale(1.05)'" onmouseout="this.style.backgroundColor='var(--accent)'; this.style.transform='scale(1)'">
                         <i class="fas fa-qrcode"></i>
                     </button>
                 </div>
                 <!-- QR Scanner (hidden by default) -->
-                <div id="scanner-panel" class="hidden mt-3 bg-white p-3 rounded-lg border">
+                <div id="scanner-panel" class="hidden mt-3 bg-white p-3 rounded-lg slide-down" style="border: 2px solid var(--border);">
                     <div id="reader"></div>
-                    <p id="scan-status" class="text-xs text-gray-500 mt-2 text-center">Arahkan kamera ke QR code produk atau member</p>
+                    <p id="scan-status" class="text-xs mt-2 text-center" style="color: var(--text-secondary);">Arahkan kamera ke QR code produk atau member</p>
                     <audio id="beep" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" preload="auto"></audio>
                 </div>
             </div>
@@ -71,24 +121,24 @@
         <!-- Right Panel: Cart & Checkout -->
         <div class="w-96 flex flex-col bg-white border-l">
             <!-- Current Sale Header -->
-            <div class="p-4 bg-blue-50 border-b">
+            <div class="p-4 border-b" style="background: var(--light-bg);">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="font-bold text-gray-800">Transaksi Saat Ini</h2>
-                        <p class="text-xs text-gray-500">Kasir: {{ auth()->user()->name }}</p>
+                        <h2 class="font-bold" style="color: var(--text-primary);">Transaksi Saat Ini</h2>
+                        <p class="text-xs" style="color: var(--text-secondary);">Kasir: {{ auth()->user()->name }}</p>
                     </div>
-                    <span id="cart-count" class="bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-bold">0</span>
+                    <span id="cart-count" class="text-white text-xs px-3 py-1 rounded-full font-bold" style="background: var(--accent);">0</span>
                 </div>
             </div>
 
             <!-- Member Info -->
-            <div class="p-3 bg-purple-50 border-b">
+            <div class="p-3 border-b" style="background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);">
                 <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center text-purple-700">
+                    <div class="flex items-center" style="color: var(--accent);">
                         <i class="fas fa-user-tag mr-2"></i>
-                        <span id="member-display">Umum</span>
+                        <span id="member-display" class="font-semibold">Umum</span>
                     </div>
-                    <button id="btn-select-member" class="text-xs text-purple-600 hover:text-purple-800">
+                    <button id="btn-select-member" class="text-xs font-semibold" style="color: var(--accent);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
                         <i class="fas fa-search mr-1"></i>Pilih
                     </button>
                 </div>
@@ -103,26 +153,26 @@
             </div>
 
             <!-- Summary & Payment -->
-            <div class="border-t bg-gray-50 p-4 space-y-3">
+            <div class="border-t p-4 space-y-3" style="background: var(--light-bg);">
                 <!-- Summary -->
                 <div class="space-y-1 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Subtotal:</span>
+                    <div class="flex justify-between" style="color: var(--text-secondary);">
+                        <span>Subtotal:</span>
                         <span id="subtotal" class="font-semibold">Rp 0</span>
                     </div>
-                    <div class="flex justify-between text-green-600">
+                    <div class="flex justify-between" style="color: #10B981;">
                         <span>Diskon Member:</span>
                         <span id="member-discount" class="font-semibold">Rp 0</span>
                     </div>
-                    <div class="flex justify-between text-gray-600">
+                    <div class="flex justify-between" style="color: var(--text-secondary);">
                         <span>Pajak (11%):</span>
                         <span id="tax" class="font-semibold">Rp 0</span>
                     </div>
-                    <div class="flex justify-between text-purple-600">
+                    <div class="flex justify-between" style="color: var(--accent);">
                         <span>Potongan Poin:</span>
                         <span id="points-discount" class="font-semibold">Rp 0</span>
                     </div>
-                    <div class="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t">
+                    <div class="flex justify-between text-lg font-bold pt-2 border-t" style="color: var(--text-primary);">
                         <span>TOTAL:</span>
                         <span id="total">Rp 0</span>
                     </div>
@@ -130,8 +180,8 @@
 
                 <!-- Payment Method -->
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Metode Pembayaran:</label>
-                    <select id="payment-method" class="w-full border rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                    <label class="block text-xs font-medium mb-1" style="color: var(--text-primary);">Metode Pembayaran:</label>
+                    <select id="payment-method" class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none" style="border: 2px solid var(--border); background: white;" onfocus="this.style.borderColor='var(--accent)'; this.style.boxShadow='0 0 0 3px rgba(255, 111, 0, 0.1)'" onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
                         <option value="cash">💵 Tunai</option>
                         <option value="debit">💳 Debit</option>
                         <option value="credit">💳 Kredit</option>
@@ -141,28 +191,28 @@
 
                 <!-- Payment Amount -->
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Jumlah Bayar:</label>
+                    <label class="block text-xs font-medium mb-1" style="color: var(--text-primary);">Jumlah Bayar:</label>
                     <input id="payment-amount" type="number" step="1000" placeholder="0" 
-                           class="w-full border rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" />
-                    <div class="text-xs text-gray-600 mt-1">Kembalian: <span id="change" class="font-bold text-green-600">Rp 0</span></div>
+                           class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none" style="border: 2px solid var(--border); background: white;" onfocus="this.style.borderColor='var(--accent)'; this.style.boxShadow='0 0 0 3px rgba(255, 111, 0, 0.1)'" onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'" />
+                    <div class="text-xs mt-1" style="color: var(--text-secondary);">Kembalian: <span id="change" class="font-bold" style="color: #10B981;">Rp 0</span></div>
                 </div>
 
                 <!-- Points -->
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Gunakan Poin:</label>
+                    <label class="block text-xs font-medium mb-1" style="color: var(--text-primary);">Gunakan Poin:</label>
                     <input id="points-used" type="number" min="0" step="1" value="0" placeholder="0" 
-                           class="w-full border rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none" />
+                           class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none" style="border: 2px solid var(--border); background: white;" onfocus="this.style.borderColor='var(--accent)'; this.style.boxShadow='0 0 0 3px rgba(255, 111, 0, 0.1)'" onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'" />
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="grid grid-cols-3 gap-2 pt-2">
-                    <button id="btn-hold" class="btn-action bg-yellow-500 hover:bg-yellow-600 text-white text-xs">
+                    <button id="btn-hold" class="btn-action text-white text-xs font-bold" style="background: #F59E0B;" onmouseover="this.style.background='#D97706'" onmouseout="this.style.background='#F59E0B'">
                         <i class="fas fa-pause"></i> Hold
                     </button>
-                    <button id="btn-cancel" class="btn-action bg-red-500 hover:bg-red-600 text-white text-xs">
+                    <button id="btn-cancel" class="btn-action text-white text-xs font-bold" style="background: #EF4444;" onmouseover="this.style.background='#DC2626'" onmouseout="this.style.background='#EF4444'">
                         <i class="fas fa-times"></i> Batal
                     </button>
-                    <button id="btn-pay" class="btn-action bg-green-600 hover:bg-green-700 text-white text-xs">
+                    <button id="btn-pay" class="btn-action text-white text-xs font-bold" style="background: #10B981;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
                         <i class="fas fa-check"></i> Bayar
                     </button>
                 </div>
@@ -171,19 +221,19 @@
     </div>
 
     <!-- Modal: Member Selection -->
-    <div id="member-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4">
+    <div id="member-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4 slide-down">
             <div class="p-4 border-b flex items-center justify-between">
-                <h3 class="font-bold text-gray-800">Pilih Member</h3>
-                <button id="close-member-modal" class="text-gray-400 hover:text-gray-600">
+                <h3 class="font-bold" style="color: var(--text-primary);">Pilih Member</h3>
+                <button id="close-member-modal" class="hover:text-gray-600" style="color: var(--text-secondary);" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform='rotate(0deg)'">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="p-4">
                 <input id="member-search-input" type="text" placeholder="🔍 Cari member..." 
-                       class="w-full border rounded-lg px-3 py-2 mb-3 focus:border-purple-500 focus:outline-none" />
+                       class="w-full rounded-lg px-3 py-2 mb-3 focus:outline-none" style="border: 2px solid var(--border);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
                 <ul id="member-search-results" class="max-h-64 overflow-y-auto space-y-2 mb-3"></ul>
-                <button id="btn-register-member" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition">
+                <button id="btn-register-member" class="w-full text-white px-4 py-2 rounded-lg font-medium transition" style="background: #10B981;" onmouseover="this.style.background='#059669'; this.style.transform='scale(1.02)'" onmouseout="this.style.background='#10B981'; this.style.transform='scale(1)'">
                     <i class="fas fa-user-plus mr-2"></i>Daftar Member Baru
                 </button>
             </div>
@@ -201,31 +251,31 @@
             </div>
             <form id="register-member-form" class="p-4 space-y-3">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap <span class="text-red-600">*</span></label>
-                    <input type="text" name="name" required class="w-full border rounded-lg px-3 py-2 focus:border-green-500 focus:outline-none" />
+                    <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Nama Lengkap <span style="color: #EF4444;">*</span></label>
+                    <input type="text" name="name" required class="w-full rounded-lg px-3 py-2 focus:outline-none" style="border: 2px solid var(--border);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-600">*</span></label>
-                    <input type="email" name="email" required class="w-full border rounded-lg px-3 py-2 focus:border-green-500 focus:outline-none" />
+                    <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Email <span style="color: #EF4444;">*</span></label>
+                    <input type="email" name="email" required class="w-full rounded-lg px-3 py-2 focus:outline-none" style="border: 2px solid var(--border);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Telepon <span class="text-red-600">*</span></label>
-                    <input type="text" name="phone" required class="w-full border rounded-lg px-3 py-2 focus:border-green-500 focus:outline-none" />
+                    <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Telepon <span style="color: #EF4444;">*</span></label>
+                    <input type="text" name="phone" required class="w-full rounded-lg px-3 py-2 focus:outline-none" style="border: 2px solid var(--border);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Alamat <span class="text-red-600">*</span></label>
-                    <textarea name="address" required rows="2" class="w-full border rounded-lg px-3 py-2 focus:border-green-500 focus:outline-none"></textarea>
+                    <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Alamat <span style="color: #EF4444;">*</span></label>
+                    <textarea name="address" required rows="2" class="w-full rounded-lg px-3 py-2 focus:outline-none" style="border: 2px solid var(--border);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password (opsional)</label>
-                    <input type="password" name="password" minlength="8" placeholder="Default: member123" class="w-full border rounded-lg px-3 py-2 focus:border-green-500 focus:outline-none" />
-                    <p class="text-xs text-gray-500 mt-1">Kosongkan untuk menggunakan password default</p>
+                    <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">Password (opsional)</label>
+                    <input type="password" name="password" minlength="8" placeholder="Default: member123" class="w-full rounded-lg px-3 py-2 focus:outline-none" style="border: 2px solid var(--border);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+                    <p class="text-xs mt-1" style="color: var(--text-secondary);">Kosongkan untuk menggunakan password default</p>
                 </div>
                 <div class="flex gap-2 pt-2">
-                    <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition">
+                    <button type="submit" class="flex-1 text-white px-4 py-2 rounded-lg font-medium transition" style="background: #10B981;" onmouseover="this.style.background='#059669'; this.style.transform='scale(1.02)'" onmouseout="this.style.background='#10B981'; this.style.transform='scale(1)'">
                         <i class="fas fa-save mr-2"></i>Simpan
                     </button>
-                    <button type="button" id="cancel-register" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition">
+                    <button type="button" id="cancel-register" class="flex-1 px-4 py-2 rounded-lg font-medium transition" style="background: var(--border); color: var(--text-primary);" onmouseover="this.style.background='#D1D5DB'" onmouseout="this.style.background='var(--border)'">
                         Batal
                     </button>
                 </div>

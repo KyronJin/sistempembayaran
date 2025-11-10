@@ -3,11 +3,7 @@
 @section('title', 'Katalog Produk')
 
 @section('content')
-<div class="content-header">
-    <h1>Katalog Produk</h1>
-    <p>Lihat produk yang tersedia dengan harga khusus member</p>
-</div>
-
+<div class="fade-in">
 <!-- Search & Filter -->
 <div class="modern-card" style="margin-bottom: 2rem;">
     <form method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap;">
@@ -104,4 +100,5 @@
     {{ $products->links() }}
 </div>
 @endif
+</div>
 @endsection

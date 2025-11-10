@@ -65,18 +65,28 @@ class AdminController extends Controller
 
     public function approveMember($id)
     {
-        $member = Member::findOrFail($id);
-        $member->update(['status' => 'active']);
+        try {
+            $member = Member::findOrFail($id);
+            $member->status = 'active';
+            $member->save();
 
-        return back()->with('success', 'Member approved successfully!');
+            return redirect()->back()->with('success', 'Member berhasil diaktifkan!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mengaktifkan member: ' . $e->getMessage());
+        }
     }
 
     public function suspendMember($id)
     {
-        $member = Member::findOrFail($id);
-        $member->update(['status' => 'suspended']);
+        try {
+            $member = Member::findOrFail($id);
+            $member->status = 'suspended';
+            $member->save();
 
-        return back()->with('success', 'Member suspended successfully!');
+            return redirect()->back()->with('success', 'Member berhasil di-suspend!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal suspend member: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -100,7 +110,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'sku' => 'required|string|unique:products',
-            'barcode' => 'nullable|string',
+            'barcode' => 'required|string|unique:products,barcode',
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
@@ -139,7 +149,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'sku' => 'required|string|unique:products,sku,' . $id,
-            'barcode' => 'nullable|string',
+            'barcode' => 'required|string|unique:products,barcode,' . $id,
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
@@ -205,6 +215,26 @@ class AdminController extends Controller
     {
         $categories = Category::withCount('products')->latest()->paginate(20);
         return view('admin.categories.index-modern', compact('categories'));
+    }
+
+    /**
+     * Transactions Management
+     */
+    public function transactionsIndex()
+    {
+        $transactions = Transaction::with(['cashier', 'member.user'])
+            ->latest('transaction_date')
+            ->paginate(20);
+        
+        return view('admin.transactions.index-modern', compact('transactions'));
+    }
+
+    public function transactionsShow($id)
+    {
+        $transaction = Transaction::with(['cashier', 'member.user', 'details.product'])
+            ->findOrFail($id);
+        
+        return view('admin.transactions.show-modern', compact('transaction'));
     }
 
     /**
@@ -414,7 +444,7 @@ class AdminController extends Controller
         $members = Member::with('user')->where('status', 'active')->orderBy('member_code')->get();
         $products = Product::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.reports.sales', compact('transactions', 'totalSales', 'totalTransactions', 'startDate', 'endDate', 'members', 'products'));
+        return view('admin.reports.sales-modern', compact('transactions', 'totalSales', 'totalTransactions', 'startDate', 'endDate', 'members', 'products'));
     }
 
     /**

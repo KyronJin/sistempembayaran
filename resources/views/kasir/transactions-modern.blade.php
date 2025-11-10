@@ -38,6 +38,7 @@
                 <tr>
                     <th>Kode Transaksi</th>
                     <th>Tanggal & Waktu</th>
+                    <th>Kasir</th>
                     <th>Member</th>
                     <th>Item</th>
                     <th style="text-align: right;">Total</th>
@@ -47,11 +48,33 @@
             </thead>
             <tbody>
                 @forelse($transactions as $transaction)
-                <tr>
-                    <td><strong>{{ $transaction->transaction_code }}</strong></td>
+                <tr style="{{ $transaction->total == 0 ? 'background-color: #fee2e2; border-left: 4px solid #dc2626;' : '' }}">
+                    <td>
+                        <strong>{{ $transaction->transaction_code }}</strong>
+                        @if($transaction->total == 0)
+                        <div>
+                            <span class="badge" style="background: #dc2626; color: white; font-size: 0.75rem;">
+                                <i class="fas fa-exclamation-triangle"></i> INVALID
+                            </span>
+                        </div>
+                        @endif
+                    </td>
                     <td>
                         <div>{{ $transaction->transaction_date->format('d M Y') }}</div>
-                        <div style="font-size: 0.875rem; color: #6b7280;">{{ $transaction->transaction_date->format('H:i') }}</div>
+                        <div style="font-size: 0.875rem; color: #6b7280;">{{ $transaction->transaction_date->format('H:i:s') }}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600; color: #1f2937;">
+                            {{ $transaction->cashier_name ?? $transaction->cashier->name ?? 'N/A' }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #6b7280;">
+                            ID: {{ $transaction->cashier_id }}
+                        </div>
+                        @if($transaction->ip_address)
+                        <div style="font-size: 0.7rem; color: #9ca3af;" title="IP Address">
+                            <i class="fas fa-network-wired"></i> {{ $transaction->ip_address }}
+                        </div>
+                        @endif
                     </td>
                     <td>
                         @if($transaction->member)
@@ -62,27 +85,45 @@
                         @endif
                     </td>
                     <td>
-                        <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <span style="font-weight: 600; color: #667eea;">
                             {{ $transaction->details->count() }} item
                         </span>
                     </td>
-                    <td style="text-align: right; font-weight: 700; color: #059669;">
-                        Rp {{ number_format($transaction->final_total, 0, ',', '.') }}
+                    <td style="text-align: right; font-weight: 700; color: {{ $transaction->total > 0 ? '#059669' : '#dc2626' }};">
+                        Rp {{ number_format($transaction->total, 0, ',', '.') }}
                     </td>
                     <td style="text-align: center;">
-                        @foreach($transaction->payments as $payment)
-                        <span class="badge" style="background: #10b981; margin: 2px;">
-                            @if($payment->payment_method === 'cash')
-                            <i class="fas fa-money-bill"></i> Tunai
-                            @elseif($payment->payment_method === 'card')
-                            <i class="fas fa-credit-card"></i> Kartu
-                            @elseif($payment->payment_method === 'qris')
-                            <i class="fas fa-qrcode"></i> QRIS
-                            @else
-                            {{ ucfirst($payment->payment_method) }}
-                            @endif
-                        </span>
-                        @endforeach
+                        @if($transaction->payments && $transaction->payments->count() > 0)
+                            @foreach($transaction->payments as $payment)
+                            <span class="badge" style="background: #10b981; margin: 2px;">
+                                @if($payment->payment_method === 'cash')
+                                <i class="fas fa-money-bill"></i> Tunai
+                                @elseif($payment->payment_method === 'debit')
+                                <i class="fas fa-credit-card"></i> Debit
+                                @elseif($payment->payment_method === 'credit')
+                                <i class="fas fa-credit-card"></i> Kredit
+                                @elseif($payment->payment_method === 'e-wallet')
+                                <i class="fas fa-wallet"></i> E-Wallet
+                                @else
+                                {{ ucfirst($payment->payment_method) }}
+                                @endif
+                            </span>
+                            @endforeach
+                        @else
+                            <span class="badge" style="background: #10b981;">
+                                @if($transaction->payment_method === 'cash')
+                                <i class="fas fa-money-bill"></i> Tunai
+                                @elseif($transaction->payment_method === 'debit')
+                                <i class="fas fa-credit-card"></i> Debit
+                                @elseif($transaction->payment_method === 'credit')
+                                <i class="fas fa-credit-card"></i> Kredit
+                                @elseif($transaction->payment_method === 'e-wallet')
+                                <i class="fas fa-wallet"></i> E-Wallet
+                                @else
+                                {{ ucfirst($transaction->payment_method) }}
+                                @endif
+                            </span>
+                        @endif
                     </td>
                     <td style="text-align: center;">
                         <div style="display: flex; gap: 0.5rem; justify-content: center;">
@@ -118,17 +159,17 @@
 
 <!-- Summary Stats -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
-    <div class="modern-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+    <div class="modern-card" style="background: #ede9fe; border-left: 4px solid #8b5cf6;">
         <div style="text-align: center;">
-            <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Total Transaksi Hari Ini</div>
-            <div style="font-size: 2rem; font-weight: 700;">{{ $daily_count }}</div>
+            <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Total Transaksi Hari Ini</div>
+            <div style="font-size: 2rem; font-weight: 700; color: #7c3aed;">{{ $daily_count }}</div>
         </div>
     </div>
     
-    <div class="modern-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+    <div class="modern-card" style="background: #d1fae5; border-left: 4px solid #10b981;">
         <div style="text-align: center;">
-            <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Penjualan Hari Ini</div>
-            <div style="font-size: 1.5rem; font-weight: 700;">Rp {{ number_format($daily_total, 0, ',', '.') }}</div>
+            <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Penjualan Hari Ini</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #059669;">Rp {{ number_format($daily_total, 0, ',', '.') }}</div>
         </div>
     </div>
 </div>

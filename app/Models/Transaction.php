@@ -12,6 +12,7 @@ class Transaction extends Model
     protected $fillable = [
         'transaction_code',
         'cashier_id',
+        'cashier_name',
         'member_id',
         'subtotal',
         'discount',
@@ -25,6 +26,11 @@ class Transaction extends Model
         'change_amount',
         'status',
         'transaction_date',
+        'ip_address',
+        'user_agent',
+        'transaction_notes',
+        'verified_at',
+        'verified_by',
         'void_reason',
         'voided_by',
         'voided_at',
@@ -41,6 +47,7 @@ class Transaction extends Model
         'points_earned' => 'integer',
         'points_used' => 'integer',
         'transaction_date' => 'datetime',
+        'verified_at' => 'datetime',
         'voided_at' => 'datetime',
     ];
 
@@ -98,6 +105,14 @@ class Transaction extends Model
     public function voidedBy()
     {
         return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    /**
+     * Get the user who verified the transaction.
+     */
+    public function verifiedBy()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 
     /**

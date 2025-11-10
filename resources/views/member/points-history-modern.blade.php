@@ -3,14 +3,10 @@
 @section('title', 'Riwayat Poin')
 
 @section('content')
-<div class="content-header">
-    <h1>Riwayat Poin</h1>
-    <p>Pantau perolehan dan penggunaan poin Anda</p>
-</div>
-
+<div class="fade-in">
 <!-- Points Summary -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-    <div class="modern-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+    <div class="modern-card" style="background: linear-gradient(135deg, #FF6F00 0%, #F57C00 100%); color: white;">
         <div style="display: flex; align-items: center; gap: 1rem;">
             <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                 <i class="fas fa-star"></i>

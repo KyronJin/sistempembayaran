@@ -11,10 +11,18 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-// Authentication Routes
+// Authentication Routes - Dual Login System
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    // Member Login
+    Route::get('/login', [AuthController::class, 'showMemberLogin'])->name('login');
+    Route::get('/member/login', [AuthController::class, 'showMemberLogin'])->name('member.login');
+    Route::post('/member/login', [AuthController::class, 'memberLogin'])->name('member.login.post');
+    
+    // Staff Login (Admin & Kasir)
+    Route::get('/staff/login', [AuthController::class, 'showStaffLogin'])->name('staff.login');
+    Route::post('/staff/login', [AuthController::class, 'staffLogin'])->name('staff.login.post');
+    
+    // Register
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 });
@@ -42,6 +50,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Categories Management
     Route::get('/categories', [AdminController::class, 'categoriesIndex'])->name('categories.index');
     
+    // Transactions Management
+    Route::get('/transactions', [AdminController::class, 'transactionsIndex'])->name('transactions.index');
+    Route::get('/transactions/{id}', [AdminController::class, 'transactionsShow'])->name('transactions.show');
+    
     // Users Management
     Route::get('/users', [AdminController::class, 'usersIndex'])->name('users.index');
     Route::get('/users/create', [AdminController::class, 'usersCreate'])->name('users.create');
@@ -66,6 +78,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Settings
     Route::get('/settings', [AdminController::class, 'settingsIndex'])->name('settings.index');
     Route::put('/settings', [AdminController::class, 'settingsUpdate'])->name('settings.update');
+    
+    // Vouchers Management
+    Route::resource('vouchers', \App\Http\Controllers\Admin\VoucherController::class);
 });
 
 // Kasir Routes
@@ -103,6 +118,10 @@ Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->grou
     // Quick Member Registration
     Route::post('/register-member', [KasirController::class, 'registerMember'])->name('register-member');
     
+    // Members Management (Kasir can view and approve)
+    Route::get('/members', [KasirController::class, 'membersIndex'])->name('members.index');
+    Route::post('/members/{id}/approve', [KasirController::class, 'approveMember'])->name('members.approve');
+    
     // Reports (Read-only for Kasir)
     Route::get('/reports', [KasirController::class, 'reportsIndex'])->name('reports.index');
     Route::get('/reports/sales', [KasirController::class, 'reportsSales'])->name('reports.sales');
@@ -112,6 +131,7 @@ Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->grou
 Route::middleware(['auth', 'role:member', 'member.status'])->prefix('member')->name('member.')->group(function () {
     Route::get('/dashboard', [MemberController::class, 'dashboard'])->name('dashboard');
     Route::get('/qr-code', [MemberController::class, 'qrCode'])->name('qr-code');
+    Route::post('/qr-code/generate', [MemberController::class, 'generateQR'])->name('generate-qr');
     Route::get('/transactions', [MemberController::class, 'transactions'])->name('transactions');
     Route::get('/transactions/{id}', [MemberController::class, 'transactionDetail'])->name('transaction-detail');
     Route::get('/points-history', [MemberController::class, 'pointsHistory'])->name('points-history');
@@ -120,4 +140,9 @@ Route::middleware(['auth', 'role:member', 'member.status'])->prefix('member')->n
     Route::get('/profile', [MemberController::class, 'profile'])->name('profile');
     Route::put('/profile', [MemberController::class, 'updateProfile'])->name('profile.update');
     Route::put('/password', [MemberController::class, 'changePassword'])->name('password.change');
+    
+    // Vouchers (Member)
+    Route::get('/vouchers', [MemberController::class, 'vouchers'])->name('vouchers');
+    Route::post('/vouchers/{id}/redeem', [MemberController::class, 'redeemVoucher'])->name('vouchers.redeem');
+    Route::get('/my-vouchers', [MemberController::class, 'myVouchers'])->name('my-vouchers');
 });

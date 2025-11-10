@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Member - {{ config('app.name') }}</title>
+    <title>Member Login - {{ config('app.name') }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -16,20 +16,25 @@
             --text-primary: #1F2937;
             --text-secondary: #6B7280;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            transition: all 0.3s ease;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
             display: flex;
-            background: var(--light-bg);
-            animation: fadeIn 0.5s ease-in;
+            background: linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%);
+        }
+
+        .login-container {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+            animation: fadeIn 0.5s ease-in-out;
         }
 
         @keyframes fadeIn {
@@ -37,25 +42,18 @@
             to { opacity: 1; }
         }
 
-        .register-container {
-            display: flex;
-            width: 100%;
-            min-height: 100vh;
-        }
-
-        .register-left {
+        .login-left {
             flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 3rem;
             background: linear-gradient(135deg, var(--secondary) 0%, #111827 100%);
-            color: white;
             position: relative;
             overflow: hidden;
         }
-        
-        .register-left::before {
+
+        .login-left::before {
             content: '';
             position: absolute;
             top: -50%;
@@ -65,14 +63,15 @@
             background: radial-gradient(circle, rgba(255, 111, 0, 0.1) 0%, transparent 70%);
             animation: pulse 15s ease-in-out infinite;
         }
-        
+
         @keyframes pulse {
             0%, 100% { transform: scale(1) rotate(0deg); }
             50% { transform: scale(1.1) rotate(5deg); }
         }
 
-        .register-left-content {
+        .login-left-content {
             max-width: 500px;
+            color: white;
             position: relative;
             z-index: 1;
             animation: slideInLeft 0.8s ease-out;
@@ -89,33 +88,45 @@
             }
         }
 
-        .register-left h1 {
+        .login-left h1 {
             font-size: 3rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             font-weight: 700;
+            letter-spacing: 1px;
         }
 
-        .register-left p {
-            font-size: 1.25rem;
-            opacity: 0.95;
-            line-height: 1.6;
+        .login-left .subtitle {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            line-height: 1.8;
+            margin-bottom: 2rem;
         }
 
-        .register-left .features {
-            margin-top: 2rem;
+        .features {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
+            margin-top: 3rem;
         }
 
         .feature-item {
             display: flex;
             align-items: center;
             gap: 1rem;
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid var(--accent);
+            backdrop-filter: blur(10px);
             transition: all 0.3s ease;
+            animation: slideInLeft 0.8s ease-out backwards;
         }
-        
+
+        .feature-item:nth-child(1) { animation-delay: 0.2s; }
+        .feature-item:nth-child(2) { animation-delay: 0.4s; }
+        .feature-item:nth-child(3) { animation-delay: 0.6s; }
+
         .feature-item:hover {
+            background: rgba(255, 255, 255, 0.1);
             transform: translateX(10px);
         }
 
@@ -123,19 +134,21 @@
             width: 50px;
             height: 50px;
             background: var(--accent);
-            border-radius: 12px;
+            color: white;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
+            flex-shrink: 0;
             transition: all 0.3s ease;
         }
-        
+
         .feature-item:hover .feature-icon {
             transform: rotate(360deg) scale(1.1);
         }
 
-        .register-right {
+        .login-right {
             flex: 1;
             display: flex;
             align-items: center;
@@ -144,9 +157,9 @@
             padding: 3rem;
         }
 
-        .register-box {
+        .login-box {
             width: 100%;
-            max-width: 500px;
+            max-width: 450px;
             background: white;
             padding: 3rem;
             border-radius: 20px;
@@ -165,25 +178,44 @@
             }
         }
 
-        .register-box h2 {
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo i {
+            font-size: 3rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .login-box h2 {
             font-size: 2rem;
             margin-bottom: 0.5rem;
             color: var(--text-primary);
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
-        .register-box .subtitle {
+        .subtitle-text {
             color: var(--text-secondary);
             margin-bottom: 2rem;
+            font-size: 0.9375rem;
         }
 
         .form-group {
             margin-bottom: 1.5rem;
             animation: fadeInUp 0.6s ease-out backwards;
         }
-        
+
         .form-group:nth-child(1) { animation-delay: 0.1s; }
         .form-group:nth-child(2) { animation-delay: 0.2s; }
-        .form-group:nth-child(3) { animation-delay: 0.3s; }
 
         @keyframes fadeInUp {
             from {
@@ -201,11 +233,12 @@
             margin-bottom: 0.5rem;
             font-weight: 600;
             color: var(--text-primary);
+            font-size: 0.9375rem;
         }
 
         .form-input {
             width: 100%;
-            padding: 0.875rem 1rem;
+            padding: 1rem 1.25rem;
             border: 2px solid var(--border);
             border-radius: 12px;
             font-size: 1rem;
@@ -221,52 +254,99 @@
             box-shadow: 0 4px 12px rgba(255, 111, 0, 0.1);
         }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .btn-register {
+        .btn-login {
             width: 100%;
-            padding: 1rem;
+            padding: 1.125rem;
             background: var(--accent);
             color: white;
             border: none;
             border-radius: 12px;
-            font-size: 1.125rem;
+            font-size: 1.0625rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            animation: fadeInUp 0.6s ease-out 0.4s backwards;
+            letter-spacing: 1px;
+            animation: fadeInUp 0.6s ease-out 0.3s backwards;
         }
 
-        .btn-register:hover {
+        .btn-login:hover {
             background: var(--accent-hover);
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(255, 111, 0, 0.3);
         }
-        
-        .btn-register:active {
+
+        .btn-login:active {
             transform: translateY(0);
         }
 
-        .login-link {
+        .divider {
+            text-align: center;
+            margin: 2rem 0;
+            position: relative;
+            animation: fadeIn 0.6s ease-out 0.4s backwards;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 1rem;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .staff-login-link {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-bg);
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out 0.5s backwards;
+        }
+
+        .staff-login-link:hover {
+            border-color: var(--accent);
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        .staff-login-link a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .staff-login-link a:hover {
+            color: var(--accent);
+        }
+
+        .register-link {
             text-align: center;
             margin-top: 1.5rem;
             color: var(--text-secondary);
-            animation: fadeIn 0.6s ease-out 0.5s backwards;
+            animation: fadeIn 0.6s ease-out 0.6s backwards;
         }
 
-        .login-link a {
+        .register-link a {
             color: var(--accent);
             text-decoration: none;
             font-weight: 600;
             border-bottom: 2px solid transparent;
             transition: all 0.3s ease;
         }
-        
-        .login-link a:hover {
+
+        .register-link a:hover {
             border-bottom-color: var(--accent);
         }
 
@@ -274,81 +354,99 @@
             padding: 1rem;
             border-radius: 12px;
             margin-bottom: 1.5rem;
+            border-left: 4px solid;
         }
 
         .alert-danger {
-            background: #fee2e2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
+            background: #FEE;
+            color: #C33;
+            border-left-color: #C33;
+        }
+
+        .alert-success {
+            background: #EFE;
+            color: #363;
+            border-left-color: #363;
         }
 
         @media (max-width: 968px) {
-            .register-container {
+            .login-container {
                 flex-direction: column;
             }
             
-            .register-left {
+            .login-left {
                 min-height: 40vh;
             }
             
-            .register-left h1 {
+            .login-left h1 {
                 font-size: 2rem;
+            }
+
+            .features {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <!-- Left Side -->
-        <div class="register-left">
-            <div class="register-left-content">
-                <h1>🎉 Bergabung dengan Kami!</h1>
-                <p>Dapatkan berbagai keuntungan dengan menjadi member:</p>
-                
+    <div class="login-container">
+        <!-- Left Side - Branding -->
+        <div class="login-left">
+            <div class="login-left-content">
+                <h1>Member Portal</h1>
+                <p class="subtitle">
+                    Selamat datang kembali di Member Portal kami. 
+                    Login untuk mengakses dashboard member, melihat transaksi, 
+                    dan menikmati benefit eksklusif Anda.
+                </p>
+
                 <div class="features">
                     <div class="feature-item">
                         <div class="feature-icon">
-                            <i class="fas fa-percentage"></i>
+                            <i class="fas fa-crown"></i>
                         </div>
                         <div>
-                            <strong>Harga Khusus Member</strong><br>
-                            <span style="opacity: 0.9;">Diskon spesial untuk semua produk</span>
+                            <strong style="display: block; margin-bottom: 0.25rem;">Harga Eksklusif</strong>
+                            <span style="opacity: 0.8; font-size: 0.9375rem;">Dapatkan harga khusus member</span>
                         </div>
                     </div>
-                    
+
                     <div class="feature-item">
                         <div class="feature-icon">
                             <i class="fas fa-star"></i>
                         </div>
                         <div>
-                            <strong>Kumpulkan Poin</strong><br>
-                            <span style="opacity: 0.9;">Setiap pembelian dapat poin reward</span>
+                            <strong style="display: block; margin-bottom: 0.25rem;">Kumpulkan Poin</strong>
+                            <span style="opacity: 0.8; font-size: 0.9375rem;">Setiap pembelian dapat poin reward</span>
                         </div>
                     </div>
-                    
+
                     <div class="feature-item">
                         <div class="feature-icon">
-                            <i class="fas fa-gift"></i>
+                            <i class="fas fa-history"></i>
                         </div>
                         <div>
-                            <strong>Promo Eksklusif</strong><br>
-                            <span style="opacity: 0.9;">Akses ke promo khusus member</span>
+                            <strong style="display: block; margin-bottom: 0.25rem;">Riwayat Transaksi</strong>
+                            <span style="opacity: 0.8; font-size: 0.9375rem;">Lihat semua transaksi Anda</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Side - Form -->
-        <div class="register-right">
-            <div class="register-box">
-                <h2>Daftar Member</h2>
-                <p class="subtitle">Isi data diri Anda untuk mendaftar</p>
+        <!-- Right Side - Login Form -->
+        <div class="login-right">
+            <div class="login-box">
+                <div class="logo">
+                    <i class="fas fa-user-circle"></i>
+                    <h2>Member Login</h2>
+                    <p class="subtitle-text">Masuk ke akun member Anda</p>
+                </div>
 
                 @if($errors->any())
                 <div class="alert alert-danger">
-                    <strong><i class="fas fa-exclamation-circle"></i> Terjadi Kesalahan:</strong>
-                    <ul style="margin: 0.5rem 0 0 1.5rem;">
+                    <strong><i class="fas fa-exclamation-circle"></i> Error!</strong>
+                    <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
                         @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
                         @endforeach
@@ -356,50 +454,41 @@
                 </div>
                 @endif
 
-                <form action="{{ route('register') }}" method="POST">
+                @if(session('success'))
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> {{ session('success') }}
+                </div>
+                @endif
+
+                <form action="{{ route('member.login.post') }}" method="POST">
                     @csrf
 
                     <div class="form-group">
-                        <label class="form-label">Nama Lengkap *</label>
-                        <input type="text" name="name" class="form-input" value="{{ old('name') }}" required>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Email *</label>
-                            <input type="email" name="email" class="form-input" value="{{ old('email') }}" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">No. Telepon *</label>
-                            <input type="tel" name="phone" class="form-input" value="{{ old('phone') }}" required>
-                        </div>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Password *</label>
-                            <input type="password" name="password" class="form-input" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Konfirmasi Password *</label>
-                            <input type="password" name="password_confirmation" class="form-input" required>
-                        </div>
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-input" value="{{ old('email') }}" required autofocus placeholder="member@example.com">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Alamat</label>
-                        <textarea name="address" class="form-input" rows="3" style="resize: vertical;">{{ old('address') }}</textarea>
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password" class="form-input" required placeholder="••••••••">
                     </div>
 
-                    <button type="submit" class="btn-register">
-                        <i class="fas fa-user-plus"></i> Daftar Sekarang
+                    <button type="submit" class="btn-login">
+                        <i class="fas fa-sign-in-alt"></i> LOGIN
                     </button>
                 </form>
 
-                <div class="login-link">
-                    Sudah punya akun? <a href="{{ route('login') }}">Login di sini</a>
+                <div class="divider">
+                    <span>Atau</span>
+                </div>
+
+                <div class="staff-login-link">
+                    <i class="fas fa-user-shield"></i>
+                    Login sebagai <a href="{{ route('staff.login') }}">Staff (Admin/Kasir)</a>
+                </div>
+
+                <div class="register-link">
+                    Belum punya akun? <a href="{{ route('register') }}">Daftar Member</a>
                 </div>
             </div>
         </div>

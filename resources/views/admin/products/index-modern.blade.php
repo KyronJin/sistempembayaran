@@ -110,7 +110,7 @@
                         @endif
                     </td>
                     <td>
-                        <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <span style="font-weight: 600; color: #667eea;">
                             {{ $product->category->name }}
                         </span>
                     </td>

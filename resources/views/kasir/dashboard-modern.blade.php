@@ -21,8 +21,8 @@
                 <p style="opacity: 0.9;">Siap melayani pelanggan hari ini!</p>
             </div>
             <div style="text-align: right;">
-                <div style="font-size: 14px; opacity: 0.9;">{{ now()->isoFormat('dddd, D MMMM Y') }}</div>
-                <div style="font-size: 36px; font-weight: 700; margin-top: 4px;">{{ now()->format('H:i') }}</div>
+                <div style="font-size: 14px; opacity: 0.9;" id="kasirCurrentDate">{{ now()->isoFormat('dddd, D MMMM Y') }}</div>
+                <div style="font-size: 36px; font-weight: 700; margin-top: 4px;" id="kasirCurrentTime">{{ now()->format('H:i') }}</div>
             </div>
         </div>
     </div>
@@ -415,6 +415,40 @@ document.getElementById('register-member-form')?.addEventListener('submit', asyn
         submitBtn.style.opacity = '1';
     }
 });
+
+// Update waktu real-time setiap detik
+function updateKasirTime() {
+    const now = new Date();
+    
+    // Format jam (HH:MM)
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timeString = `${hours}:${minutes}`;
+    
+    // Format tanggal (Hari, DD Bulan YYYY)
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    const dayName = days[now.getDay()];
+    const day = now.getDate();
+    const monthName = months[now.getMonth()];
+    const year = now.getFullYear();
+    
+    const dateString = `${dayName}, ${day} ${monthName} ${year}`;
+    
+    // Update DOM
+    const timeElement = document.getElementById('kasirCurrentTime');
+    const dateElement = document.getElementById('kasirCurrentDate');
+    
+    if (timeElement) timeElement.textContent = timeString;
+    if (dateElement) dateElement.textContent = dateString;
+}
+
+// Update setiap detik
+setInterval(updateKasirTime, 1000);
+
+// Update langsung saat page load
+updateKasirTime();
 </script>
 @endpush
 @endsection
